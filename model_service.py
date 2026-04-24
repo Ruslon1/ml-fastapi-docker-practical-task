@@ -22,8 +22,7 @@ def load_artifact(model_path: Path = MODEL_PATH) -> dict[str, Any]:
     return joblib.load(model_path)
 
 
-def predict_species(features: list[float], model_path: Path = MODEL_PATH) -> dict[str, Any]:
-    artifact = load_artifact(model_path)
+def predict_species_from_artifact(features: list[float], artifact: dict[str, Any]) -> dict[str, Any]:
     model = artifact["model"]
     target_names = artifact["target_names"]
     feature_array = np.array([features])
@@ -34,3 +33,8 @@ def predict_species(features: list[float], model_path: Path = MODEL_PATH) -> dic
         "predicted_class": predicted_class,
         "predicted_label": target_names[predicted_class],
     }
+
+
+def predict_species(features: list[float], model_path: Path = MODEL_PATH) -> dict[str, Any]:
+    artifact = load_artifact(model_path)
+    return predict_species_from_artifact(features, artifact)
