@@ -1,12 +1,7 @@
-from pathlib import Path
-
-import joblib
-import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-
-MODEL_PATH = Path("model.joblib")
+from model_service import predict_species
 
 app = FastAPI(
     title="ML FastAPI Docker Demo",
@@ -27,14 +22,6 @@ class PredictionResponse(BaseModel):
     predicted_label: str
 
 
-def load_artifact() -> dict:
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            "model.joblib was not found. Run `python3 train.py` before starting the API."
-        )
-    return joblib.load(MODEL_PATH)
-
-
 @app.get("/")
 def read_root() -> dict[str, str]:
     return {"message": "ML API is running"}
@@ -43,28 +30,18 @@ def read_root() -> dict[str, str]:
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest) -> PredictionResponse:
     try:
-        artifact = load_artifact()
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-    model = artifact["model"]
-    target_names = artifact["target_names"]
-
-    features = np.array(
-        [
+        result = predict_species(
             [
                 request.sepal_length,
                 request.sepal_width,
                 request.petal_length,
                 request.petal_width,
             ]
-        ]
-    )
-
-    predicted_class = int(model.predict(features)[0])
-    predicted_label = target_names[predicted_class]
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return PredictionResponse(
-        predicted_class=predicted_class,
-        predicted_label=predicted_label,
+        predicted_class=result["predicted_class"],
+        predicted_label=result["predicted_label"],
     )
