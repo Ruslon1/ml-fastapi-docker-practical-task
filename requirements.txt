@@ -6,3 +6,4 @@ numpy==2.2.5
 mlflow==3.11.1
 streamlit==1.56.0
 catboost==1.2.10
+torch==2.11.0
